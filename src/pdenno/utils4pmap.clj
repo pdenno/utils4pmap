@@ -1,13 +1,15 @@
-(ns pdenno.utils4pmap)
+(ns pdenno.utils4pmap
+  "Implement a pmap-like function that accepts a timeout."
+  (:require [clojure.core.async :as async :refer [chan alts!! go timeout >!]]))
 
 ;;; Attempt 1
-(declare pmap-utils-fn)
+(declare pmap-update-fn)
 (defn pmap-timeout1
   "Like (pmap func coll) except that it returns {:timeout <member>} for those members of coll
    for which func does not complete in timeout milliseconds after that member is started.
    Runs as many futures in parallel as possible for the hardware. Returns a vector of results."
   ([func members timeout]
-   (pmap-timeout func members timeout (+ 2 (.. Runtime getRuntime availableProcessors))))
+   (pmap-timeout1 func members timeout (+ 2 (.. Runtime getRuntime availableProcessors))))
   ([func members timeout nprocessors]
    (let [to-run      (atom (vec members))
          results     (atom [])
@@ -19,10 +21,8 @@
            (swap! running-cnt inc)
            (swap! to-run #(vec (rest %)))
            (swap! results conj {::fut (future
-                                        (try (let [t (Thread/currentThread)]
-                                               (deliver p {:thread t ; POD thread no longer used.
-                                                           :started (System/currentTimeMillis)})
-                                               (func mem))
+                                        (try (do (deliver p (System/currentTimeMillis))
+                                                 (func mem))
                                              (catch InterruptedException e
                                                {:timeout mem}))) ; POD redundant, maybe ignored.
                                 :prom p
@@ -42,19 +42,17 @@
         (do (swap! running-cnt dec)
             (deref (::fut m))),
         (> (System/currentTimeMillis)
-           (+ (:started @(:prom m)) timeout))
+           (+ @(:prom m) timeout))
         (do (swap! running-cnt dec)
-            (.interrupt (:thread @(:prom m))) ; try...
-            (.stop (:thread @(:prom m)))      ; every-...
-            (future-cancel (::fut m))          ; -thing. 
+            (future-cancel (::fut m))  
             {:timeout (:mem m)})       ; POD redundant
         :else m))
 
 ;;;=================== Attempt 2 =============================
-(defn pmap-timeout2
+#_(defn pmap-timeout2
   "Like (pmap func coll) except that it returns {:timeout <member>} for those members of coll
    for which func does not complete in timeout milliseconds after that member is started."
-  ([func members maxtime] (pmap-timeout func members maxtime :timeout))
+  ([func members maxtime] (pmap-timeout2 func members maxtime :timeout))
   ([func members maxtime timeout-key]
    (let [chan&prom (map #(let [c (chan)
                                p (promise)]
@@ -65,7 +63,7 @@
      ;; This was designed to gets around futures not .stop-ing. Still doesn't stop.
      (doall
       (map (fn [mem [c p]]
-             (let [launched (deref p)
+             (let [launched (deref p) ; blocks on unlaunched, not perfect.
                    remaining (max (- maxtime (- (System/currentTimeMillis) launched)) 1)
                    [v _] (alts!! [c (timeout remaining)])]
                (if (contains? v ::val)
@@ -73,3 +71,17 @@
                  {timeout-key mem})))
            members
            chan&prom)))))
+
+
+(defn sleepy-fn1
+  "Sleeps, returns argument."
+  [n]
+  (Thread/sleep n)
+  n)
+
+(defn busy-fn1
+  "Stays busy, never finishes."
+  [_]
+  (while (< (rand-int 10) 100)
+    (+ 1 (rand-int 5))))
+
