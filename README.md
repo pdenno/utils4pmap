@@ -1,10 +1,15 @@
 # utils4pmap
 
-A Clojure library designed to ... well, that part is up to you.
+An implementation of a pmap-like function, for which calls to the argument function
+are aborted after a specified timeout.
+
+NOTE: This is experimental code that passes tests but does not seem to be working correctly in
+a project where I've tried it!
 
 ## Usage
 
-FIXME
+(pmap-timeout1 fn coll timeout) 
+(pmap-timeout2 fn coll timeout) -- Commented out. See utils4fpmap.clj and utils4pmap_test.clj
 
 ## License
 
