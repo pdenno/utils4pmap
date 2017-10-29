@@ -28,8 +28,8 @@
   (testing "that pmap-timeout1 finishes for busy processes."
     (let [result (repeatedly 10 #(pmap-timeout1 busy-fn (range 10) 50))]
       (is (== (count result) 10))
-      (is (every? #(== (count %) 10) result)
-          (is (every? (fn [t] (every? #(contains? % :timeout) t)) result))))))
+      (is (every? #(== (count %) 10) result))
+      (is (every? (fn [t] (every? #(contains? % :timeout) t)) result)))))
 
 #_(deftest sleepy-pmap-timeout2-test
   (testing "that pmap-timeout2 finishes for sleepy processes."
