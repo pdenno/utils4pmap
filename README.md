@@ -8,8 +8,14 @@ a project where I've tried it!
 
 ## Usage
 
-(pmap-timeout1 fn coll timeout) 
-(pmap-timeout2 fn coll timeout) -- Commented out. See utils4fpmap.clj and utils4pmap_test.clj
+````clojure
+(pmap-timeout1 fn coll timeout)
+````
+
+
+````clojure
+(pmap-timeout2 fn coll timeout) ; Commented out. See utils4fpmap.clj and utils4pmap_test.clj
+````
 
 ## License
 
