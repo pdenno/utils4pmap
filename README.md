@@ -3,23 +3,24 @@
 An implementation of a pmap-like function for which calls to the argument function
 are aborted after a specified timeout.
 
-NOTE: This is experimental code that passes tests but does not seem to be working correctly in
-a project where I've tried it!
+Caveat: Java doesn't have a reliable way to stop a process, thus neither does Clojure.
+Use of .stop is much discouraged and indeed my experience suggests that .stop-ing causes weird behavior.
+A compromise in design is for the calling code to use (.isInterrupted (Thread/currentThread)) or
+similar calls to check whether future-cancel (the mechanism used here) has been called on the thread. 
+Experience suggest that 'busy' code needs such checks. (See the tests for an example.)
+Threads that sleep do not need to perform this test.
+
+In light of the above considerations, consider the status of this code as 'still under development'.
+If you have thoughts on how it might be improved, please let me know through github issues. 
 
 ## Usage
 
 ````clojure
-(pmap-timeout1 fn coll timeout)
-````
-
-
-````clojure
-(pmap-timeout2 fn coll timeout) ; Commented out. See utils4fpmap.clj and utils4pmap_test.clj
+(pmap-timeout fn coll timeout)
 ````
 
 ## License
 
-Copyright © 2017 Peter Denno
+Copyright © 2018 Peter Denno
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.

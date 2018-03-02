@@ -11,58 +11,23 @@
 (defn busy-fn
   "Stays busy, never finishes."
   [_]
-  (while (< (rand-int 10) 100)
+  (while (and (< (rand-int 10) 100)
+              (not (.isInterrupted (Thread/currentThread))))
     (+ 1 (rand-int 5))))
 
-(deftest sleepy-pmap-timeout1-test
+(deftest sleepy-pmap-timeout-test
   (testing "that pmap-timeout1 finishes for sleepy processes."
     (is (= 10
            (count (repeatedly
                    10
-                   (fn [] (let [times (pmap-timeout1 sleepy-fn
+                   (fn [] (let [times (pmap-timeout sleepy-fn
                                                      (repeatedly 8 #(+ 10 (* 10 (rand-int 6))))
                                                      50)]
                             (apply + (map #(if (number? %) % (:timeout %)) times))))))))))
 
-(deftest busy-pmap-timeout1-test
+(deftest busy-pmap-timeout-test
   (testing "that pmap-timeout1 finishes for busy processes."
-    (let [result (repeatedly 10 #(pmap-timeout1 busy-fn (range 10) 50))]
+    (let [result (repeatedly 10 #(pmap-timeout busy-fn (range 10) 50))]
       (is (== (count result) 10))
       (is (every? #(== (count %) 10) result))
       (is (every? (fn [t] (every? #(contains? % :timeout) t)) result)))))
-
-#_(deftest sleepy-pmap-timeout2-test
-  (testing "that pmap-timeout2 finishes for sleepy processes."
-    (is (= 10
-           (count (repeatedly
-                   10
-                   (fn [] (let [times (pmap-timeout2 sleepy-fn
-                                                     (repeatedly 8 #(+ 10 (* 10 (rand-int 6))))
-                                                     50)]
-                            (apply + (map #(if (number? %) % (:timeout %)) times))))))))))
-
-#_(deftest busy-pmap-timeout2-test
-  (testing "that pmap-timeout2 timesout for busy processes."
-    (let [result (repeatedly 10 #(pmap-timeout2 busy-fn (range 10) 50))]
-      (is (== (count result) 10))
-      (is (every? #(== (count %) 10) result)
-      (is (every? (fn [t] (every? #(contains? % :timeout) t)) result))))))
-
-
-#_(deftest sleepy-pmap-timeout3-test
-  (testing "that pmap-timeout2 finishes for sleepy processes."
-    (is (= 10
-           (count (repeatedly
-                   10
-                   (fn [] (let [times (pmap-timeout3 sleepy-fn
-                                                     (repeatedly 8 #(+ 10 (* 10 (rand-int 6))))
-                                                     50)]
-                            (apply + (map #(if (number? %) % (:timeout %)) times))))))))))
-
-#_(deftest busy-pmap-timeout3-test
-  (testing "that pmap-timeout3 timesout for busy processes."
-    (let [result (repeatedly 10 #(pmap-timeout3 busy-fn (range 10) 50))]
-      (is (== (count result) 10))
-      (is (every? #(== (count %) 10) result)
-      (is (every? (fn [t] (every? #(contains? % :timeout) t)) result))))))
-
