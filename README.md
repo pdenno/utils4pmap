@@ -15,6 +15,10 @@ If you have thoughts on how it might be improved, please let me know through git
 
 ## Usage
 
+[![Clojars Project](http://clojars.org/pdenno/utils4pmap/latest-version.svg)](http://clojars.org/pdenno) <br>
+[![Build Status](https://travis-ci.org/pdenno/utils4pmap.svg?branch=master)](https://travis-ci.org/pdenno/utils4pmap)
+
+
 ````clojure
 (pmap-timeout fn coll timeout)
 ````
